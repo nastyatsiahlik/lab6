@@ -1,0 +1,46 @@
+name: Tests and Deployment
+
+defaults:
+  run:
+    working-directory: .
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    env:
+      MONGODB_KEY: ${{ secrets.MONGODB_KEY }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup mongo
+        run: docker-compose -f docker-compose.yml up -d
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: TEST
+        run: npm run test
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Deploy
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
